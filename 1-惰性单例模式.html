@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>1-惰性单例模式</title>
+</head>
+<body>
+    <input type="button" value="click me!" class="insertPButton">
+<script>
+    /*
+     * 1-惰性单例模式
+     * 核心：确保只有一个实例，并且提供全局访问
+     * 目标：单击一个按钮，在页面中插入一个P标签，并且只插入一次
+     */
+
+    // 管理单例的逻辑
+    var getSingle = function (fn) {
+        var result;
+        return function () {
+            return result || (result = fn.apply(this, arguments));
+        };
+    };
+
+    // 创建节点的逻辑
+    var createNode = function () {
+        var node = document.createElement('p');
+        node.innerHTML = '单例模式，我只会被创建一次';
+        document.body.appendChild(node);
+        return node;
+    };
+
+    // 创建P节点的单例
+    var createSingleNode = getSingle(createNode);
+
+    // 给按钮绑定事件
+    document.querySelector('.insertPButton').addEventListener('click', createSingleNode, false);
+
+</script>
+</body>
+</html>
