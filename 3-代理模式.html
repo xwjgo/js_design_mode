@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3-代理模式</title>
+</head>
+<body>
+
+<script>
+    /*
+     * 3-代理模式
+     * 核心：当客户不方便直接访问一个对象或者不满足需要的时候，提供一个对象来控制对这个对象的访问
+     *       保护代理：为被请求对象（女神）负责，比如把年龄太大或者没有宝马的追求者过滤掉
+     *       虚拟代理：为请求对象负责，它把一些开销很大的对象（比如flower），延迟到真正需要的时候才去创建
+     * 目标：虚拟代理实现图片预加载 & 缓存代理实现缓存大开销运算结果
+     * 其他: 建议把网速调低，否则可能看不到预加载的菊花图
+     * 2017/01/31 10:46
+     */
+
+    // 虚拟代理实现图片预加载
+    var myImage = (function () {
+        var imgNode = new Image();
+        document.body.appendChild(imgNode);
+        return {
+            setSrc: function (src) {
+                imgNode.src = src;
+            }
+        };
+    })();
+
+    var proxyImage = (function () {
+        var img = new Image();
+        img.onload = function () {
+            myImage.setSrc(this.src);
+        };
+        return {
+            setSrc: function (src) {
+                myImage.setSrc('./菊花图.jpg');
+                // 代理先代为请求，如果load成功，在转给本体加载
+                img.src = src;
+            }
+        };
+    })();
+
+    proxyImage.setSrc("https://camo.githubusercontent.com/07b538fd9ffe48e3f59e5dd208ef3dde5b586f1e/687474703a2f2f3778766c766f2e636f6d312e7a302e676c622e636c6f7564646e2e636f6d2f6a732545382541452542452545382541452541312545362541382541312545352542432538462545342542382538452545352542432538302545352538462539312545352541452539452545382542372542352e6a7067");
+
+    // 缓存代理实现缓存大开销计算结果，假设下面的加法和乘法都是开销比较大的运算
+    var mult = function () {
+        console.log('mult...');
+        var a = 1;
+        for (var i = 0, len = arguments.length; i < len; i ++) {
+            a = a * arguments[i];
+        }
+        return a;
+    };
+
+    var plus = function () {
+        console.log('plus...');
+        var a = 0;
+        for (var i = 0, len = arguments.length; i < len; i ++) {
+            a += arguments[i];
+        }
+        return a;
+    };
+
+    // 创建缓存代理的工厂
+    var createProxyFactory = function (fn) {
+        var cache = {};
+        return function () {
+            var args = [].join.call(arguments, ',');
+            if (args in cache) {
+                return cache[args];
+            }
+            return cache[args] = fn.apply(this, arguments);
+        }
+    };
+
+    var proxyMult = createProxyFactory(mult);
+    var proxyPlus = createProxyFactory(plus);
+
+    console.log(proxyMult(1,2,3,4));
+    console.log(proxyMult(1,2,3,4));
+    console.log(proxyMult(1,2,3,4));
+    console.log(proxyPlus(1,2,3));
+    console.log(proxyPlus(1,2,3));
+    console.log(proxyPlus(1,2,3));
+</script>
+</body>
+</html>
