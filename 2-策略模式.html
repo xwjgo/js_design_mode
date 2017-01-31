@@ -47,6 +47,8 @@
     Validator.prototype.add = function (dom, rules) {
         var self = this;
         for (var i = 0, rule; rule = rules[i++];) {
+            // 这里必须使用闭包，用来创建函数作用域
+            // 否则strategyAry和errorMsg会被不断覆写
             (function (rule) {
                 var strategyAry = rule.strategy.split(':');
                 var errorMsg = rule.errorMsg;
