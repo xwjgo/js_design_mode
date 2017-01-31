@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2-策略模式</title>
+</head>
+<body>
+    <h2>策略模式</h2>
+    <form action="http://www.fjhdhgfj.com/register" id="registerForm" method="post">
+        请输入用户名：<input type="text" name="userName">
+        请输入密码: <input type="text" name="password">
+        请输入手机号：<input type="text" name="phoneNumber">
+        <button>提交</button>
+    </form>
+<script>
+    /*
+     * 2-策略模式
+     * 核心：定义一系列的算法，把它们一个个封装起来，并且使他们可以相互替换
+     * 目标：表单校验，每个输入框可同时添加多个校验规则
+     * 2017/01/29 23:02
+     */
+
+    // 策略对象，封装具体算法
+    var strategies = {
+        isNonEmpty: function (value, errorMsg) {
+            if (value === '') {
+                return errorMsg;
+            }
+        },
+        minLength: function (value, length, errorMsg) {
+            if (value.length < length) {
+                return errorMsg;
+            }
+        },
+        isMobile: function (value, errorMsg) {
+            if (!/^1(?:3|5|8)[0-9]{9}$/.test(value)) {
+                return errorMsg;
+            }
+        }
+    };
+
+    // Validator类
+    var Validator = function () {
+        this.cache = [];
+    };
+
+    Validator.prototype.add = function (dom, rules) {
+        var self = this;
+        for (var i = 0, rule; rule = rules[i++];) {
+            (function (rule) {
+                var strategyAry = rule.strategy.split(':');
+                var errorMsg = rule.errorMsg;
+                self.cache.push(function () {
+                    var strategy = strategyAry.shift();
+                    strategyAry.unshift(dom.value);
+                    strategyAry.push(errorMsg);
+                    return strategies[strategy].apply(dom, strategyAry);
+                });
+            })(rule);
+        }
+    };
+
+    Validator.prototype.start = function () {
+        for (var i = 0, strategyFunc; strategyFunc = this.cache[i++];) {
+            var errorMsg = strategyFunc();
+            if (errorMsg) {
+                alert(errorMsg);
+                return errorMsg;
+            }
+        }
+    };
+
+    // 客户调用代码，添加一些校验规则
+    var registerForm = document.getElementById('registerForm');
+    var validateFunc = function () {
+        var validator = new Validator();
+        validator.add(registerForm.userName, [
+            {
+                strategy: 'isNonEmpty',
+                errorMsg: '用户名不能为空'
+            },
+            {
+                strategy: 'minLength:10',
+                errorMsg: '用户名长度不能小于10位'
+            }
+        ]);
+        validator.add(registerForm.password, [
+            {
+                strategy: 'isNonEmpty',
+                errorMsg: '密码不能为空'
+            }
+        ]);
+        validator.add(registerForm.phoneNumber, [
+            {
+                strategy: 'isNonEmpty',
+                errorMsg: '手机号不能为空'
+            },
+            {
+                strategy: 'isMobile',
+                errorMsg: '手机号格式不正确'
+            }
+        ]);
+
+        var errorMsg = validator.start();
+        return errorMsg;
+    };
+
+    registerForm.onsubmit = function () {
+        var errorMsg   = validateFunc();
+        if (errorMsg) {
+            return false;
+        }
+    };
+
+</script>
+</body>
+</html>
