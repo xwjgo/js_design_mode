@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>5-发布订阅模式</title>
+</head>
+<body>
+
+<script>
+    /*
+     * 5-发布订阅模式（观察者模式）
+     * 核心：定义对象间的一对多的依赖关系，当一个对象的状态发生改变时，所有依赖于它的对象都将得到通知
+     * 目标：实现全局发布订阅对象，充当“中间折”角色
+     *      订阅者不需要关系消息来自哪个发布者，发布者也只用关心通过中介者来发布消息
+     * 应用场景：一个网站中的header、nav、购物车等模块都依赖于ajax异步请求来的信息
+     * 2017/02/04 20:44
+     */
+    var Event = (function () {
+        var clientList = {};  // 订阅者列表
+
+        var listen = function (key, fn) {   // 添加订阅者
+            if (!clientList[key]) {
+                clientList[key] = [];
+            }
+            clientList[key].push(fn);
+        };
+
+        var trigger = function () {         // 发布消息
+            var key = [].shift.call(arguments);
+            var fns = clientList[key];
+            if (!fns || fns.length === 0) {
+                return false;
+            }
+            for (var i = 0, fn; fn = fns[i ++];) {
+                fn.apply(this, arguments);
+            }
+        };
+
+        var remove = function (key, fn) {
+            var fns = clientList[key];
+            if (!fns || fns.length === 0) {
+                return false;
+            }
+            if (!fn) {
+                fns.length = 0;
+            } else {
+                for (var l = fns.length - 1; l >= 0; l --) {
+                    var _fn = fns[l];
+                    if (_fn === fn) {
+                        fns.splice(l, 1);
+                    }
+                }
+            }
+        };
+
+        return {
+            listen: listen,
+            trigger: trigger,
+            remove: remove
+        }
+
+    })();
+
+    Event.listen('squareMeter88', function (price) {    // 小红订阅关于88平米房间的消息
+        console.log('价格=' + price);
+    });
+
+    Event.listen('squareMeter110', function (price) {   // 小明订阅关于110平米房间的消息
+        console.log('价格=' + price);
+    });
+
+    Event.trigger('squareMeter88', 200000);     // 中介者发布关于88平米房间的消息
+    Event.trigger('squareMeter110', 300000);    // 中介者发布关于100平米房间的消息
+
+</script>
+</body>
+</html>

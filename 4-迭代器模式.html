@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>4-迭代器模式</title>
+</head>
+<body>
+
+<script>
+    /*
+     * 4-迭代器模式
+     * 核心：提供一种方法顺序访问一个聚合对象中的各个元素，而又不需要暴露该对象的内部表示
+     * 目标：实现自己的迭代器，并且可以中止迭代器
+     * 应用举例：根据不同的浏览器获取相应的上传组件
+     * 2017/02/04 20:13
+     */
+
+    var each = function (ary, callback) {
+        for (var i = 0, len = ary.length; i < len; i ++) {
+            if (callback(i, ary[i]) === false) {
+                break;  // callback的执行结果返回false, 提前中止循环
+            }
+        }
+    };
+
+    each([5,6,7,8,9], function (i, n) {
+        if (n > 7) {
+            return false;   // 中止迭代，只返回小于等于7的数字
+        }
+        console.log(n);
+    });
+
+</script>
+</body>
+</html>
