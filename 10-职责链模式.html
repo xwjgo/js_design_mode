@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>10-职责链模式</title>
+</head>
+<body>
+
+<script>
+    /**
+     * 10-职责链模式
+     * 核心：使多个对象都有机会处理请求，从而避免请求的发送者和接受者之间的耦合关系
+     *       将这些对象连成一条链，并沿着这条链传递该请求，直到有一个对象处理它为止
+     *       最大的优点：解耦了请求发送者和N个接收者之间的复杂关系
+     * 目标：使用灵活可拆分的职责链节点实现手机购买流程 & AOP实现职责链
+     */
+
+    /********************** 手机购买流程 **********************/
+    // 500元订单
+    var order500 = function (orderType, pay, stock) {
+        if (orderType === 1 && pay === true) {
+            console.log('500元订金预购，得到100元优惠券');
+        } else {
+            return 'nextSuccessor';         // 我不知道下一个节点是谁，反正把请求向继任者传递
+        }
+    };
+
+    // 200元订单
+    var order200 = function (orderType, pay, stock) {
+        alert(200);
+        if (orderType === 2 && pay === true) {
+            console.log('200元订金预购，得到50元代金券');
+        } else {
+            return 'nextSuccessor';
+        }
+    };
+
+    // 普通订单
+    var orderNormal = function (orderType, pay, stock) {
+        if (stock > 0) {
+            console.log('普通购买，无优惠券');
+        } else {
+            console.log('手机库存不足');
+        }
+    };
+
+    // 接下来定义一个Chain类
+    var Chain = function (fn) {
+        this.fn = fn;
+        this.successor = null;
+    };
+
+    Chain.prototype = {
+        constructor: Chain,
+        setNextSuccessor: function (successor) {
+            this.successor = successor;
+        },
+        passRequest: function () {
+            var ret = this.fn.apply(this, arguments);
+            if (ret === 'nextSuccessor') {
+                return this.successor && this.successor.passRequest.apply(this.successor, arguments);
+            }
+        }
+    };
+
+    // 现在把3个订单函数分别包装成职责链的节点
+    var chainOrder500 = new Chain(order500);
+    var chainOrder200 = new Chain(order200);
+    var chainOrderNormal = new Chain(orderNormal);
+
+    chainOrder500.setNextSuccessor(chainOrder200);
+    chainOrder200.setNextSuccessor(chainOrderNormal);
+
+    // 传递请求给第一个节点
+//    chainOrder500.passRequest(1, true, 500);
+//    chainOrder500.passRequest(2, true, 500);
+//    chainOrder500.passRequest(1, false, 0);
+
+    /*************************** AOP 实现职责链 ********************************/
+
+    Function.prototype.after = function (fn) {
+        var self = this;
+        return function () {
+            var ret = self.apply(this, arguments);
+            if (ret === 'nextSuccessor') {
+                return fn.apply(this, arguments);
+            }
+
+            return ret;
+        }
+    };
+
+    var order = order500.after(order200).after(orderNormal);
+
+    order(1, true, 500);
+    order(2, true, 500);
+    order(2, false, 500);
+
+</script>
+</body>
+</html>
