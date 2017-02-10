@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>9-享元模式</title>
+</head>
+<body>
+
+<script>
+    /**
+     * 9-享元模式
+     * 核心：运用共享技术来有效支持细粒度的对象
+     *      享元模式将对象的属性划分为内部状态与外部状态
+     *      内部状态（比如性别）：存储于对象内部，可以被一些对象共享，独立于具体场景，通常不会变化
+     *      外部状态（比如内衣）：取决于具体的场景，并根据场景变化，外部状态不能被共享
+     * 适用场景：在一个存在大量相似对象的系统中，享元模式可以很好地解决大量对象带来的性能问题
+     * 目标：苹果公司生产手机
+     * 2017/02/10 19:25
+     */
+
+    /*******************************未优化的代码*******************************/
+
+    var Phone = function (model, screen, memory, serialNumber) {
+        this.model = model;
+        this.screen = screen;
+        this.memory = memory;
+        this.serialNumber = serialNumber;
+    };
+
+    // 现在苹果公司生产大批量iphone6
+    var phones6 = [];
+    for (var i = 0; i < 1000000; i ++) {
+        var iphone6 = new Phone('iphone6', 5.0, '2G', i);
+        phones6.push(iphone6);
+    }
+    // 现在苹果公司又要生产大批量的iphone10
+    // 我们发现这写iPhone每个都独立申请一块内存，性能不佳
+    // 这些iphone10只有序列号总是变化，其他不怎么变
+    var phones10 = [];
+    for (var l = 0; l < 1000000; l ++) {
+        var iphone10 = new Phone('iphone10', 8.8, '8G', l);
+        phones10.push(iphone10);
+    }
+
+    /**************************使用享元模式优化*****************************/
+
+    // 享元类
+    var phoneFlyWight = function (model, screen, memory) {
+        this.model = model;
+        this.screen = screen;
+        this.memory = memory;
+    };
+
+    // 享元工厂 单例
+    var flyWightFactory = (function () {
+        var flyWights = {};
+        return {
+            create: function (model, screen, memory) {
+                var key = model + screen + memory;
+                if (flyWights[key]) {
+                    return flyWights[key];
+                }
+                return flyWights[key] = new phoneFlyWight(model, screen, memory);
+            }
+        }
+    })();
+
+    // 客户端类
+    var Iphone6 = function (model, screen, memory, serialNumber) {
+        this.flyWight = flyWightFactory.create(model, screen, memory);
+        this.serialNumber = serialNumber;
+    };
+
+    var Iphone10 = function (model, screen, memory, serialNumber) {
+        this.flyWight = flyWightFactory.create(model, screen, memory);
+        this.serialNumber = serialNumber;
+    };
+
+    // 现在生产大批量iphone6
+    var phones6_2 = [];
+    for (var m = 0; m < 1000000; m ++) {
+        var p6 = new Iphone6('iphone6', 5.0, '2G', m);  // 虽然运行了100000次，但是第70行让这100000个对象共享一个对象
+        phones6_2.push(p6);
+    }
+
+    // 再生产大批量的iphone10
+    var phones10_2 = [];
+    for (var n = 0; n < 1000000; n ++) {
+        var p10 = new Iphone10('iphone10', 8.8, '8G', n);
+        phones10_2.push(p10);
+    }
+
+</script>
+</body>
+</html>
