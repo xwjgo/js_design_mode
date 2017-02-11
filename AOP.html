@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AOP</title>
+</head>
+<body>
+    <button id="button">我是一个按钮</button>
+<script>
+    /**
+     * AOP aspect oriented programming 面向切面编程
+     * 核心：把一些与核心业务逻辑无关的功能抽离出来，比如日志统计、安全控制、异常处理等
+     *      把这些功能抽离出来之后，再通过“动态织入”的方式掺入业务逻辑模块中
+     * 应用场景：用AOP实现装饰函数
+     * 目标：使用AOP装饰 document.getElementById 函数
+     * 2017/02/11 15:03
+     */
+
+    /********************* 关于this被劫持 *************************/
+    /**
+     * 在不是用AOP来装饰 document.getElementById 的情况下，我们通常会这么实现目标功能：
+     * 1. 保存原函数的引用
+     * 2. 覆写原函数引用，并在新函数中执行原函数，以达到装饰函数的效果
+     * 这种方式并没有改变 document.getElementById 的源代码
+     */
+
+    var _getElementById = document.getElementById;
+
+    document.getElementById = function (id) {
+        alert(1);   // 被装饰的功能
+        return _getElementById(id);
+    };
+
+    var button = document.getElementById('button');
+
+    /**
+     * 上面代码出现错误：Uncaught TypeError: Illegal invocation
+     * 原因是document.getElementById 函数中的this被window劫持，本应该指向document才对
+     * 下面是我们的改进方法，但是这样显然不方便
+     */
+
+    document.getElementById = function (id) {
+        alert(100);   // 被装饰的功能
+        return _getElementById.call(document, id);
+    };
+
+    var button2 = document.getElementById('button');
+
+    /************************ 用AOP装饰函数 ***********************************/
+    Function.prototype.before = function (fn) {
+        var _self = this;   // 保存原函数引用
+        return function () {
+            fn.apply(this, arguments);  // 先执行fn，这里this指向document
+            return _self.apply(this, arguments);    // 后执行原函数，并保证this不会被劫持，this指向document
+        }
+    };
+
+    Function.prototype.after = function (fn) {
+        var _self = this;
+        return function () {
+            var ret = _self.apply(this, arguments);
+            fn.apply(this, arguments);
+            return ret;
+        }
+    };
+
+    document.getElementById = document.getElementById.before(function () {
+        alert(1000);
+    });
+
+    document.getElementById = document.getElementById.after(function () {
+        alert(10000);
+    });
+
+    var button3 = document.getElementById('button'); // 函数名为 getElementById，上下文为 document
+
+    /**
+     * 上面的AOP实现实在Function.prototype上添加了before和after方法
+     * 但是很多人不换这种污染原型方式，那么我们可以向下面一样做一些变通
+     */
+
+    // 待修饰的函数
+    window.onload = function () {
+        alert('loaded');
+    };
+
+    var before = function (fn, beforeFn) {
+        return function () {
+            beforeFn.apply(this, arguments);    // 注意这里可以在beforeFn中修改arguments，从而影响真正函数的参数
+            fn.apply(this, arguments);
+        }
+    };
+
+    window.onload = before(window.onload || function () {}, function () {   // 假如我们不想破坏原来的window.onload功能
+        alert('beforeLoad');
+    });
+
+
+</script>
+</body>
+</html>

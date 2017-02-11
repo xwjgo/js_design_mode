@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>如果apply不传入参数</title>
+</head>
+<body>
+
+<script>
+    var func = function () {
+        console.log(this);
+    };
+    var xwj = {
+        name: 'xuwenjiang',
+        age: 21
+    };
+
+    func();             // window
+    func.apply();       // window，相当于直接执行window
+    func.apply(null);   // window，相当于直接执行window
+    func.apply(this);   // window，根据函数运行环境，动态绑定（当前为window）
+    func.apply(xwj);    // Object
+</script>
+</body>
+</html>
