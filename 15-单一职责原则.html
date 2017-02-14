@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>15-单一职责原则</title>
+</head>
+<body>
+
+<script>
+    /**
+     * 15-单一职责原则 (single responsibility principle) SRP
+     * 核心：一个对象只做一件事
+     * 应用场景：已经在各个模式中使用了（后面的其他模式也一样）
+     * 目标：体验迭代器模式中的SRP
+     * 2017/02/14
+     */
+
+    /*********************** 违背单一职责原则的迭代器模式 ********************/
+
+    var appendDiv = function (data) {
+        for (var i = 0, l = data.length; i < l; i ++) {
+            var div = document.createElement('div');
+            div.innerHTML = data[i];
+            document.body.appendChild(div);
+        }
+    };
+
+    appendDiv([1,2,3,4,5]);
+
+    /**
+     * 在上面的例子中，迭代器先遍历一个集合，然后再往页面中添加了一些方法
+     * appendDiv本来只负责渲染数据，但是这里它还承担了遍历聚合对象data的职责
+     * 加入data从数组变成了对象，那么我们得去修改appendDiv的源码
+     */
+
+    /*********************** 符合单一职责原则的迭代器 *********************/
+
+    var each = function (obj, callback) {
+        var length = obj.length;
+        var isArray = obj.isArraylike(obj);         // isArraylike看jQuery源码
+
+        if (isArray) {
+            for (var i = 0; i < length; i ++) {
+                if (callback.call(obj[i], i, obj[i]) === false) {
+                    break;
+                }
+            }
+        } else {
+            for (var n in obj) {
+                callback.call(obj[n], n, obj[n]);
+            }
+        }
+        return obj;
+    };
+
+    var appendDiv = function (data) {
+        each(data, function (i, n) {
+            var div = document.createElement('div');
+            div.innerHTML = n;
+            document.body.appendChild(div);
+        });
+    };
+
+    appendDiv([11, 22, 33, 44]);
+    appendDiv({
+        name: 'xuwenjiang',
+        age: 21,
+        school: 'OUC'
+    });
+
+
+
+
+</script>
+
+</body>
+</html>
